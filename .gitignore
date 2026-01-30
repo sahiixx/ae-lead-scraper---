@@ -1,0 +1,29 @@
+# Environment files (contain secrets)
+.env
+*.json
+credentials.json
+service-account.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+
+# Output files
+*.csv
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
