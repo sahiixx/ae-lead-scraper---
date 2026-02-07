@@ -1,11 +1,9 @@
 services:
   - type: cron
     name: uae-lead-scraper
-    runtime: python
-    pythonVersion: "3.11"
-    schedule: "0 */6 * * *"  # Every 6 hours
-    buildCommand: pip install -r requirements.txt
-    startCommand: python scraper.py
+    runtime: docker
+    schedule: "0 */6 * * *"
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: SHEET_ID
         sync: false
