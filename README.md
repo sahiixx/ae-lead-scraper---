@@ -1,139 +1,97 @@
-# UAE Lead Scraper
+# ae-lead-scraper---
+
+![Python](https://img.shields.io/badge/python-3.11+-blue) ![Docker](https://img.shields.io/badge/docker-ready-blue)
 
 Automated web scraper for Dubai real estate leads from Dubizzle. Extracts owner-direct listings with phone numbers and saves to Google Sheets.
 
-## Features
+## Table of Contents
 
-- Scrapes multiple Dubai communities (Springs, Arabian Ranches 3, Al Waha)
-- Extracts UAE phone numbers and normalizes to international format
-- Identifies owner-direct listings (no agent/commission)
-- Flags "hot deals" (cheap + owner-direct)
-- Auto-uploads to Google Sheets with WhatsApp links
-- Runs every 6 hours via cloud deployment
-- Retry logic and rate limiting to avoid blocks
-- CSV backup files for each community
+- [Overview](#overview)
+- [Quick Start](#quick-start)
+- [Model Routing](#model-routing)
+- [Project Layout](#project-layout)
+- [Development](#development)
+- [Related Repositories](#related-repositories)
+
+## Overview
+
+Automated web scraper for Dubai real estate leads from Dubizzle. Extracts owner-direct listings with phone numbers and saves to Google Sheets.
+
+| | |
+|---|---|
+| **Stack** | python |
+| **Frameworks** | docker |
+| **Tests** | yes |
+| **Commits** | 2 |
+| **Last activity** | 2026-08-10 |
+| **Visibility** | public |
 
 ## Quick Start
 
-### 1. Set Up Google Sheets
-
-1. Create a new Google Sheet
-2. Copy the Sheet ID from URL: `docs.google.com/spreadsheets/d/[SHEET_ID]/edit`
-
-### 2. Create Google Service Account
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create new project: `uae-scraper`
-3. Enable APIs:
-   - Google Sheets API
-   - Google Drive API
-4. Create Service Account:
-   - IAM & Admin → Service Accounts → Create
-   - Name: `scraper-bot`
-   - Create JSON key and download
-5. Share your Google Sheet with the service account email (Editor access)
-
-### 3. Deploy
-
-#### Option A: GitHub Actions (Free)
-
-1. Go to repo Settings → Secrets → Actions
-2. Add secrets:
-   - `SHEET_ID`: Your Google Sheet ID
-   - `GOOGLE_CREDENTIALS`: Full JSON key file contents
-3. Go to Actions → Run workflow manually
-
-#### Option B: Render ($7/month)
-
-1. Connect repo at [render.com](https://render.com)
-2. Select "Blueprint" deployment
-3. Add environment variables:
-   - `SHEET_ID`
-   - `GOOGLE_CREDENTIALS`
-
-### 4. Local Testing
+### Install
 
 ```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Create .env file
-cp .env.example .env
-# Edit .env with your credentials
-
-# Test connection
-python test_setup.py
-
-# Run scraper
-python scraper.py
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt   # or: pip install -e .
 ```
 
-## Configuration
+### Run
 
-Edit `scraper.py` to customize:
-
-```python
-# Communities to scrape (add/remove as needed)
-communities = [
-    ('Springs', 'https://dubai.dubizzle.com/...'),
-    ('AR3', 'https://dubai.dubizzle.com/...'),
-]
-
-# Hot deal threshold (AED/year)
-is_hot = price_num < 140000 and is_owner
+```bash
+# Entry point not auto-detected; inspect the layout below.
 ```
 
-## Output
+## Model Routing
 
-### Google Sheets Columns
+Agent work in this repo routes through Azure AI Foundry. See [`AGENTS.md`](./AGENTS.md)
+for the full contract.
 
-| Column | Description |
-|--------|-------------|
-| Community | Area name |
-| Title | Listing title |
-| Price | Rental price |
-| Phones | Extracted phone numbers |
-| Is Owner | YES/NO owner-direct |
-| WhatsApp | Click-to-chat link |
-| Scraped At | Timestamp |
-| Hot Deal | YES/NO flag |
+| Purpose | Deployment | Endpoint |
+|---|---|---|
+| Default / general | `gpt-5.6-sol` | `/openai/v1/chat/completions` |
+| Deep reasoning | `claude-opus-5` | `/openai/v1/responses` **only** |
+| Embeddings | `text-embedding-3-small` | `/openai/v1/embeddings` |
 
-### CSV Files
-
-Each run creates backup files:
-- `Springs_leads.csv`
-- `AR3_leads.csv`
-- `Al_Waha_leads.csv`
-
-## Schedule
-
-- **GitHub Actions**: Every 6 hours (0:00, 6:00, 12:00, 18:00 UTC)
-- **Render**: Every 6 hours
-
-To change schedule, edit `.github/workflows/scraper.yml`:
-```yaml
-schedule:
-  - cron: '0 */6 * * *'  # Every 6 hours
-  - cron: '0 */2 * * *'  # Every 2 hours
-  - cron: '0 8,20 * * *' # 8am and 8pm only
+```bash
+export AZURE_FOUNDRY_API_KEY=...        # never commit this
+export AZURE_FOUNDRY_BASE_URL=https://<resource>.openai.azure.com/openai/v1
 ```
 
-## Troubleshooting
+> **Gotcha:** Claude deployments on Azure return `404 api_not_supported` on
+> `/chat/completions`. They answer **only** via the Responses API.
 
-### "GOOGLE_CREDENTIALS not set"
-- Check your environment variables are properly set
-- For GitHub: Settings → Secrets → Actions
-- For Render: Environment tab
+## Project Layout
 
-### "Permission denied"
-- Share your Google Sheet with the service account email
-- The email is in your JSON file under `client_email`
+```
+AGENTS.md
+Dockerfile
+LICENSE
+README.md
+render.yaml
+requirements.txt
+scraper.py
+test_setup.py
+```
 
-### "No listings found"
-- Dubizzle may have changed their HTML structure
-- Check if the URLs are still valid
-- Try running locally to debug
+## Development
 
-## License
+```bash
+# lint / format before committing
+ruff check . && ruff format .
 
-MIT
+# run the CI check locally
+gh workflow run hermes-azure-check.yml
+```
+
+Secrets live in environment variables and CI secrets — never in tracked files.
+
+## Related Repositories
+
+Part of a 84-repository workspace sharing one agentic contract:
+
+- **[agentic-harness](https://github.com/sahiixx/agentic-harness)** — patterns, contracts, and reference implementations
+- `AGENTS.md` in every repo pins identical model routing
+
+---
+
+<sub>README maintained by the agentic harness · last regenerated 2026-08-10</sub>
